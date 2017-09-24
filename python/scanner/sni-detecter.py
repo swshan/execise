@@ -28,7 +28,7 @@ passip = []
 times = 0
 n = 1
 stop = False
-port = 1080
+port = 8118
 
 
 def printx (text = '',type = 0):
@@ -50,6 +50,7 @@ def worker(port):
     while not q.empty():
         global times ,n ,passip,stop
         ip = q.get_nowait()
+        port = 8118 if port is None else str(port)
         if detect(ip, timeout, hostname, port) and req_test(ip, port) == True:
             passip.append(ip)
             printx ('√   '+ip , 1)
@@ -64,7 +65,6 @@ def worker(port):
 def req_test(ip, port):
     testUrl = 'http://www.douban.com'
     timeout = 3
-    port = str(1080) if port is None else str(port)
     proxies = {"http":"http://"+ip+":"+port,"https":"http://"+ip+":"+port
     }
     headers = {
@@ -81,12 +81,10 @@ def req_test(ip, port):
     return True
 
 
-def caller(ips):
+def caller(ips ,port):
     print 
     requests = []
     n = len(ips)
-    
-    port = 1080
     for item in ips:
         q.put(item)
 
@@ -122,7 +120,7 @@ def main():
         txt = file_obj.read()
         ips = gen_ip(txt)
         print('读入了'+ str(len(ips)) +'个ip')
-        caller(ips)
+        caller(ips, port)
     finally:
         file_obj.close()
 
