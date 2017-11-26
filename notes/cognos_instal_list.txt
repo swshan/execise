@@ -6,7 +6,7 @@
 
 
 
-提前的检查
+0. 提前的检查
 
 系统版本
 WAS版本
@@ -61,7 +61,7 @@ https://www.ibm.com/support/knowledgecenter/en/SSFUEU_6.2.1/com.ibm.swg.ba.cogno
 改hosts 加上互通的外网主机名
 注意localhost的解析
 
-建立 wasadmin 用户和 wasgroup uid 和 gid 要801
+1. 建立 wasadmin 用户和 wasgroup uid 和 gid 要801
 
 groupadd wasgrooup -g 801
 useradd wasadmin -u 801 -g wasgroup 
@@ -93,7 +93,7 @@ vim /etc/fstab
 
 
 
-#安装 IM
+2 #安装 IM
 
 unzip unzip agent.installer.linux.gtk.x86_64_1.8.4000.20151125_0201.zip
 
@@ -101,7 +101,7 @@ unzip unzip agent.installer.linux.gtk.x86_64_1.8.4000.20151125_0201.zip
 # root用户
 ./installc -installationDirectory /usr/IBM/WebSphere8/IM/installationManager -datalocation /usr/IBM/WebSPhere8/IM/appData -acceptLicense -sP
 
-安装was的和FP补丁
+3 安装was的和FP补丁
 cd /usr/IBM/WebSphere8/IM/installationManager/eclipse/tools/
 ./imcl install xxx -nl en,zh_CN -repositories http://xxx/ -eclipseLocation /usr/IBM/WebSphere8/AppServer -installationDirectory /usr/IBM/WebSphere8/AppServer -acceptLicense -sP
 
@@ -110,16 +110,23 @@ cd /usr/IBM/WebSphere8/IM/installationManager/eclipse/tools/
 ./imcl updateAll  -isntallationDirectory /usr/IBM/WebSphere8/AppServer \
 -repositories <path> -acceptLicense -sP
 
-安装IHS
+4 安装IHS
 
 cd /usr/IBM/WebSphere8/IM/installationManager/eclipse/tools/
 ./imcl install xxx -nl en,zh_CN -repositories http://xxx/ -eclipseLocation /usr/IBM/WebSphere8/IHS -installationDirectory /usr/IBM/WebSphere8/IHS -properites user.ihs.httpPort=8080 -acceptLicense -sP
 
+
+5 ###检查
+检查WAS和IHS 的 versionInfo.sh
+还有java 版本 java -version
+
+
 #1号机
 
+###
+-validatePorts
 
-
-####建立概要
+6 ####建立概要
 ./manageprofile.sh \
 -create \
 -profileName dmgr -personalCertValidityPeriod 15 \
@@ -146,7 +153,7 @@ cd /usr/IBM/WebSphere8/IM/installationManager/eclipse/tools/
 -hostname host02
 
 
-# 添加节点 开启dmgr时 
+7. # 添加节点 开启dmgr时 
 切换目录到profiles 的 app下
 addNode.sh COGNOS01 8879 
        <hostname> <soap port>
@@ -354,7 +361,18 @@ gw 的环境变量是本机IP
 ###改动httpd.conf
 
 
-#ihs httpd
+### IHS
+版本2.2 适用
+(WAS 9)版本2.4 有一些指令是变动的
+
+ 	
+
+Order deny,allow
+Deny from all
+     |
+Require all granted
+
++++++
 
 注释掉不需要的部分
 
@@ -371,7 +389,7 @@ gw 的环境变量是本机IP
 #</Directory>
 
 #添加
-MaxRequestChild 50000
+MaxRequestChild 150
 
 
 ScriptAlias /ibmcognos/cgi-bin "/opt/ibm/cognos/apptie1/cgi-bin"
@@ -454,3 +472,10 @@ cognos 网页内报错
 
 
 +++++++
+
+
+heapdump 
+
+IBM_HEAPDUMP, true
+IBM_HEAPDUMPDIR, /tmp
+IBM_HEAPD_DUMP, true
