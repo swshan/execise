@@ -101,9 +101,15 @@ unzip unzip agent.installer.linux.gtk.x86_64_1.8.4000.20151125_0201.zip
 # root用户
 ./installc -installationDirectory /usr/IBM/WebSphere8/IM/installationManager -datalocation /usr/IBM/WebSPhere8/IM/appData -acceptLicense -sP
 
++++++
+imcl uninstall <package> -installationDirectory <path>
++++++
+
 3 安装was的和FP补丁
 cd /usr/IBM/WebSphere8/IM/installationManager/eclipse/tools/
-./imcl install xxx -nl en,zh_CN -repositories http://xxx/ -eclipseLocation /usr/IBM/WebSphere8/AppServer -installationDirectory /usr/IBM/WebSphere8/AppServer -acceptLicense -sP
+./imcl install xxx -nl en,zh_CN -repositories http://xxx/ -eclipseLocation /usr/IBM/WebSphere8/AppServer -installationDirectory /usr/IBM/WebSphere8/AppServer \ 
+-sharedResourcesDirectory /usr/IBM/WebSPhere8/IM/IMShared \
+-acceptLicense -sP
 
 安装补丁
 
