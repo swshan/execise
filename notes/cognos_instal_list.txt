@@ -1,0 +1,437 @@
+﻿###FTP
+/share/software/cognos/10.2.2
+
+###WebSpherePlugin只能用一个xml配置 一般来说
+
+
+
+
+提前的检查
+
+系统版本
+WAS版本
+Cognos版本和对应的DB驱动版本
+IHS拓扑和其它拓扑，Cognos组件拓扑和端口
+
+#准备的配置
+
+/etc/security/limit.conf
+
+nofile 65535
+noproc 65535
+
+++++++++++++++++++++++++++++
+#准备的包
+32and64
+
+glibc
+glibc.i686
+nspr
+libstdc++-4
+nss
+motif(openmotif)
+
++++++++++++++++++++++++++++
+
+每个组件都要复制驱动
+
+
++++++++++++++++++++++++++++
+
+
+改hosts 加上互通的外网主机名
+注意localhost的解析
+
+建立 wasadmin 用户和 wasgroup uid 和 gid 要801
+
+groupadd wasgrooup -g 801
+useradd wasadmin -u 801 -g wasgroup 
+
+
+++++++++ #lvm相关操作
+https://wiki.archlinux.org/index.php/LVM
+IP
+ pvcreate /dev/sda2
+
+vgs 命令查看卷组
+lvdisplay 查看lv
+
+#创建LV
+lvcreate -L 15G datavg -n lv_was
+
+lvextend -L +50G /dev/mapper/lv_was
+
+mkfs.xfs /dev/datavg/lv_cognos
+
+mkdir -p /usr/IBM/WebSphere8
+
+
+fstab 相关操作
+
+vim /etc/fstab
+
+/dev/mapper/xxx /usr/IBM   xfs      defaults                0      0
+
+
+
+#安装 IM
+
+unzip unzip agent.installer.linux.gtk.x86_64_1.8.4000.20151125_0201.zip
+
+
+# root用户
+./installc -installationDirectory /usr/IBM/WebSphere8/IM/installationManager -datalocation /usr/IBM/WebSPhere8/IM/appData -acceptLicense -sP
+
+安装was的和FP补丁
+cd /usr/IBM/WebSphere8/IM/installationManager/eclipse/tools/
+./imcl install xxx -nl en,zh_CN -repositories http://xxx/ -eclipseLocation /usr/IBM/WebSphere8/AppServer -installationDirectory /usr/IBM/WebSphere8/AppServer -acceptLicense -sP
+
+安装补丁
+
+./imcl updateAll  -isntallationDirectory /usr/IBM/WebSphere8/AppServer \
+-repositories <path> -acceptLicense -sP
+
+安装IHS
+
+cd /usr/IBM/WebSphere8/IM/installationManager/eclipse/tools/
+./imcl install xxx -nl en,zh_CN -repositories http://xxx/ -eclipseLocation /usr/IBM/WebSphere8/IHS -installationDirectory /usr/IBM/WebSphere8/IHS -properites user.ihs.httpPort=8080 -acceptLicense -sP
+
+#1号机
+
+
+
+####建立概要
+./manageprofile.sh \
+-create \
+-profileName dmgr -personalCertValidityPeriod 15 \
+-profilePath /usr/IBM/WebSPhere8/AppServer/profiles/dmgr \
+-templatePath /usr/IBM/WebSPhere8/AppServer/profilesTemplate/dmgr \
+-nodeName dmgr \
+-hostname host01
+
+./manageprofile.sh \
+-create \
+-profileName app01 -personalCertValidityPeriod 15 \
+-profilePath /usr/IBM/WebSPhere8/AppServer/profiles/app01 \
+-templatePath /usr/IBM/WebSPhere8/AppServer/profilesTemplate/managed \
+-nodeName app01 \
+-hostname host01
+
+####2号机
+./manageprofile.sh \
+-create \
+-profileName app02 -personalCertValidityPeriod 15 \
+-profilePath /usr/IBM/WebSPhere8/AppServer/profiles/app02 \
+-templatePath /usr/IBM/WebSPhere8/AppServer/profilesTemplate/managed \
+-nodeName app02 \
+-hostname host02
+
+
+# 添加节点 开启dmgr时 
+切换目录到profiles 的 app下
+addNode.sh COGNOS01 8879 
+       <hostname> <soap port>
+
+addNode.sh <hostname> 8879
+2号机也要 addNode.sh
+
+startServer.sh dmgr 
+startNode.sh
+
+##################网页里建立集群cognos
+cognos
+
+Cluster 新建 cognos 新建member appXX对应几个app 例如一台机两个member
+cm1/2 直接新建出来
+
+步骤复制 was_configure.doc文档图片
+
+Server> Clusters > Websphere app server cluster > 
+step1 填入 cluster 名字 例如cognos
+step2 添加第一个成员名字app01和选择节点app01
+step3 添加其它成员app02 点击add member按钮
+step4 检查summary和完成
+
+
+
+
+
+app列表有了之后 要改heap参数 免得启动OOM
+
+
+
+
+###################################################################################
+#准备安装cognos
+# 在停止运行的时候安装FP补丁
+！先输入了数据库用户密码才能生成建库脚本
+
+# db2 http://www.cnblogs.com/MikeZhang/archive/2017/07/14/installDB2_20170706.html
+
+ Add the bcprov-jdk14-134.jar  from  /cognos/c8_64/bin64/jre/1.5.0/lib/ext/bcprov-jdk14-134.jar to the $JAVA_HOME/lib/ext path
+
+==== 依赖包 (未做)
+     复制驱动和bcprov
+32和64
+
+libstdc++
+gtk2
+glib2
+libXtst
+compat-libstdc++
+openmotif
+nss
+nspr
+libstdc++
+pam
+libXp
+libXmu
+compat-glibc-headers
+compat-glibc
+
+=====
+db2创建实例
+切换到 db2inst1用户
+
+cd /opt/ibm/db2/V10.1/instance
+./dascrt -u db2dasusr1
+./db2icrt -a server -u db2fenc1 db2inst1
+
+======
+复制db2jcc.jar 和license 到 cognos 的 cm 目录下
+改权限 cognos目录和 was目录和 IHS目录
+
+
+cp db2jcc.jar /opt/cognos/cm1/p2pd/WEB-INF/lib/db2jcc.jar
+
+cp /opt/ibm/cognos/cm1/bin64/jre7.0/lib/ext/bcprov-jdk14-134.jar /usr/IBM/WebSPhere8/AppServer/java/jre/lib/ext/
+
+安装界面就是 Application Tie 和 gateway 和 Content 这三个组件
+子目录名字和组件对应
+分别安装在
+/opt/cognos/cm1/ 
+/opt/cognos/apptie1/
+/opt/cognos/apptie2/ 
+/opt/cognos/gw/
+
+2号机也有四个
+补丁也要每个目录都安装
+
+
+配置 cogconfig.sh 的 export HOME_JAVA=/usr/IBM/WebSPhere8/AppServer/java/jre/
+没有x权限要 wq！
+
+启动每个组件的 cogconfig.sh
+
+！先输入了数据库用户密码才能生成建库脚本
+
+先配置cm的 配置好之后要运行了才能配置其它的apptie
+
+cm1 的 cogconfig配置
+ip是本机外网IP
+
+改动
+
+
+Dispathcher Setting 
+External dispatcher URI http://<ip>:9080/p2pd/servlet/dispatch
+Internal dispatcher URI http://<ip>:9080/p2pd/servlet/dispatch
+
+Other URI settings
+Dispatch URL for external application  http://<ip>:9080/p2pd/servlet/dispatch
+Content Manager URIs  http://<ip>:9080/p2pd/servlet/
+
+Logging
+Locallog server port number 9362 
+File Maximum number of full log files 10
+
+Cryptography
+Common symmetruc key lifetime in days > 3650
+
+Enable CAF validation > False
+
+##数据源
+Content Store 
+    Database server and port number 127.0.0.1:50000
+	User ID and password > wasadmin wasadmin
+	Database name > cognos
+在左侧Content Store 右键 generate SQL
+
+然后用db2 的命令来执行这个sql文件 路径在提示框里 第一次生产相关的数据库
+用db2inst1用户来执行
+db2 -tvf <xxx>/<xxx>.sql
+
+保存配置
+
+++++++++++++++++++ 
+apptie1
+++++++++++++++++++
+
+
+Logging 9462
+
+
+
+++++++++++++++++++
+
+cm1/2 要build 两个包
+app 要build一个包
+都要配置
+
+app的IP和端口配置自己的 端口是wc_defaulthost
+app的content manager设置cm 的IP和端口
+Content Manager 和网关配置都是自己的IP和端口
+
+
+启动app server 如果报错 dispatcher cannot service the request需要等待几分钟
+
+
+++++++++++++++++
+Install new middleware
+
+app 选择 cognos 勾选模块 点击应用按钮 才会生效
+映射虚拟主机 勾选模块
+
+
+
+							
+
+
+配置好cogconfig 之后
+
+要在网页里添加 app server 条目的 Environment Entries
+LD_LIBRARY_PATH
+    <cognos>/cm1/bin64
+	
+改最大最小堆 2048
+
+六个条目都要添加 不然会报错 error 500 uncatchexception
+
+
+++++++ build app
+
+注释 cm1/cm2 是不同的 需要构建一个apptie 但是全部要配置
+
++++++ Installed new app
+
+
+
+++++ new webserver
+
+
+IHS札记
+
+非受管节点IHS流程
+
+httpd.conf
+
+配置好cognos 的cogconfig的gw之后
+gw 的环境变量是本机IP
+
+
+#Cognos 设置 性能相关的参数
+在条目的 set property 里面 tuning相关
+
+###改动httpd.conf
+
+
+#ihs httpd
+
+注释掉不需要的部分
+
+#ScriptAlias /cgi-bin/ "xxx/IHS/cgi-bin/"
+#
+#<IfModule mod-cgid.c>
+#xxx
+#
+#<IfModule>
+
+
+#<Directory "/usr/IBM/WebSphere8/IHS/cgi-bin">
+#   xxx
+#</Directory>
+
+#添加
+MaxRequestChild 50000
+
+
+ScriptAlias /ibmcognos/cgi-bin "/opt/ibm/cognos/apptie1/cgi-bin"
+
+<Directory>
+    AllowOverride None
+	Options None
+	Order allow,deny
+	Allow from all
+</Directory>
+
+Alias /ibmcognos "/opt/ibm/cognos/gw/webcontent"
+
+<Directory>
+    Options Indexes MultiViews
+	AllowOverride None
+	Order allow,deny
+	Allow from all
+</Directory>
+
+
+
+## 改其它
+注释CustomLog
+CustomLog "/usr/IBM/WebSphere8/WebSphere8/IHS/logs/access_log.%Y.%m.%d.log 85400 480" common env=!image
+
+ErrorLog "!/usr/IBM/WebSphere8/WebSphere8/IHS/bin/rotatelogs /usr/IBM/WebSphere8/WebSphere8/IHS/logs/error_log.%Y.%m.%d.log 864090 480"
+
+注释LogFormat
+LogFormat “%h %l %u %t \"%r"\ %>s %b \"{Referer}i\" \"%{User-Agent}i\"” combined
+
+LogFormat "%h %{x-forwared-for}i %t %u %v:%p{%P} %m-%H Sec. %>s %b "
+LogFormat "%{Referer}i -> %U" referer
+LogFormat "%{User-agent}i" agent
+
+SetEnvIf Request_URI \.gif% image
+SetEnvIf Request_URI \.GIF% image
+SetEnvIf Request_URI \.jpg% image
+SetEnvIf Request_URI \.JPG% image
+SetEnvIf Request_URI \.png% image
+SetEnvIf Request_URI \.js% image
+SetEnvIf Request_URI \.bmp% image
+SetEnvIf Request_URI \.css% image
+SetEnvIf Request_URI \.mid% image
+SetEnvIf Request_URI \.class% image
+SetEnvIf Request_URI \.zip% image
+SetEnvIf Request_URI \.ico% image
+
+
+#部分完结
+
+User wasadmin
+Group wasgroup
+
+ServerName <hostname>:8000
+
+#end
+
+#网页设置
+添加虚拟端口
+
+# 开始测试网址
+
+#网页添加web_server (?)
+
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+部署的时候 需要检查defaultcoregroup 是否有节点 和 add cluster member有关
+
+cognos 网页内报错
+
+如果cognos 网页出现apptie1/2 不可用 尝试停止和kill -TERM 再启动
+在cognos 管理网页重新注册条目试试
+重新启动app
+
+
++++++++
+对于cognos本身来说 不是必须生成和传播IHS插件。对于其它应用就要，看需求
+
+
++++++++
