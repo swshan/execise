@@ -31,6 +31,25 @@ libstdc++-4
 nss
 motif(openmotif)
 
+
++++++++++++++++++++++++++++
+https://www.ibm.com/support/knowledgecenter/en/SSFUEU_6.2.1/com.ibm.swg.ba.cognos.Installation_Guide_WebSphere.6.2.1.doc/c_cognosbusinessintelligenceinstallations.html
+
+
+++++
+
+    gtk2-2.18.9-6.el6.x86_64.rpm
+    glib2-2.22.5-6.el6.x86_64.rpm
+    libXtst-1.0.99.2-3.el6.x86_64.rpm
+    compat-libstdc++-33-3.2.3-69.el6.x86_64.rpm
+    openmotif22-2.2.3-19.el6.x86_64.rpm
+    pam-1.1.1-10.el6.x86_64.rpm
+    libXp-1.0.0-15.1.el6.x86_64.rpm
+    libXmu-1.0.5-1.el6.x86_64.rpm
+    compat-glibc-headers-2.3.4-2.26.x86_64.rpm
+    compat-glibc-2.3.4-2.26.x86_64.rpm
+
+
 +++++++++++++++++++++++++++
 
 每个组件都要复制驱动
