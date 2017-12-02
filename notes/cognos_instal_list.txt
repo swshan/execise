@@ -7,8 +7,16 @@
 
 系统版本
 WAS版本
-Cognos小版本和对应的DB驱动版本
-IHS拓扑和其它拓扑，Cognos组件拓扑和端口
+所需Cognos及 FP小版本
+对应兼容的DB版本
+
+IHS拓扑和端口，Cognos组件拓扑和端口
+IHS用户
+WAS用户
+
+db库名字 IP 端口
+
+
 
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -17,7 +25,7 @@ IHS拓扑和其它拓扑，Cognos组件拓扑和端口
 /etc/security/limit.conf
 
 nofile 65535
-noproc 65535
+nproc 65535
 
 ++++++++++++++++++++++++++++
 #准备的包
@@ -400,22 +408,22 @@ Require all granted
 MaxRequestChild 150
 
 
-ScriptAlias /ibmcognos/cgi-bin "/opt/ibm/cognos/apptie1/cgi-bin"
+ScriptAlias /ibmcognos/cgi-bin "/opt/ibm/cognos/gw/cgi-bin"
 
-<Directory "/opt/ibm/cognos/apptie1/cgi-bin">
+<Directory "/opt/ibm/cognos/gw/cgi-bin">
     AllowOverride None
-	Options None
-	Order allow,deny
-	Allow from all
+    Options None
+    Order allow,deny
+    Allow from all
 </Directory>
 
 Alias /ibmcognos "/opt/ibm/cognos/gw/webcontent"
 
 <Directory "/opt/ibm/cognos/gw/webcontent">
     Options Indexes MultiViews
-	AllowOverride None
-	Order allow,deny
-	Allow from all
+    AllowOverride None
+    Order allow,deny
+    Allow from all
 </Directory>
 
 
@@ -430,7 +438,7 @@ ErrorLog "|/usr/IBM/WebSphere8/WebSphere8/IHS/bin/rotatelogs /usr/IBM/WebSphere8
 加上
 LogFormat "%h %{x-forwared-for}i %t %u %v:%p{%P} %m-%H Sec. %>s %b " common 
 
-
+加入
 SetEnvIf Request_URI \.gif% image
 SetEnvIf Request_URI \.GIF% image
 SetEnvIf Request_URI \.jpg% image
@@ -492,6 +500,7 @@ IBM_HEAPD_DUMP, true
 ++++
 
 系统的bash_profile 环境变量
+db客户端需要
 ++
 export DB2DIR=/opt/ibm/db2/V9.7
 export LD_LIBRARY_PATH=$DB2DIR/lib32:
@@ -499,6 +508,12 @@ export LD_LIBRARY_PATH=$DB2DIR/lib32:
 
 
 +++++ end
+
++++
+./db2icrt -u db2fenc1 db2inst1
+
++++
+
 +++++
 排错快速引导
 +++++
