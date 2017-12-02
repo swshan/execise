@@ -1,10 +1,7 @@
 ﻿###FTP
 /share/software/cognos/10.2.2
 
-###WebSpherePlugin只能用一个xml配置 一般来说
-
-
-
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 0. 提前的检查
 
@@ -12,6 +9,8 @@
 WAS版本
 Cognos小版本和对应的DB驱动版本
 IHS拓扑和其它拓扑，Cognos组件拓扑和端口
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #准备的配置
 
@@ -423,14 +422,13 @@ Alias /ibmcognos "/opt/ibm/cognos/gw/webcontent"
 
 ## 改其它
 注释CustomLog
-CustomLog "/usr/IBM/WebSphere8/WebSphere8/IHS/logs/access_log.%Y.%m.%d.log 85400 480" common env=!image
+CustomLog "|/usr/IBM/WebSphere8/WebSphere8/IHS/bin/rotatelogs  /usr/IBM/WebSphere8/WebSphere8/IHS/logs/access_log.%Y.%m.%d.log 85400 480" common env=!image
 
 ErrorLog "|/usr/IBM/WebSphere8/WebSphere8/IHS/bin/rotatelogs /usr/IBM/WebSphere8/WebSphere8/IHS/logs/error_log.%Y.%m.%d.log 864090 480"
 
-注释LogFormat
-LogFormat “%h %l %u %t \"%r"\ %>s %b \"{Referer}i\" \"%{User-Agent}i\"” combined
-
-LogFormat "%h %{x-forwared-for}i %t %u %v:%p{%P} %m-%H Sec. %>s %b "
+注释原来的 LogFormat common那行 
+加上
+LogFormat "%h %{x-forwared-for}i %t %u %v:%p{%P} %m-%H Sec. %>s %b " common 
 
 
 SetEnvIf Request_URI \.gif% image
