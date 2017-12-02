@@ -10,7 +10,7 @@
 
 系统版本
 WAS版本
-Cognos版本和对应的DB驱动版本
+Cognos小版本和对应的DB驱动版本
 IHS拓扑和其它拓扑，Cognos组件拓扑和端口
 
 #准备的配置
@@ -27,9 +27,10 @@ noproc 65535
 glibc
 glibc.i686
 nspr
-libstdc++-4
+libstdc++
 nss
 motif(openmotif)
+glib2
 
 
 +++++++++++++++++++++++++++
@@ -339,6 +340,8 @@ LD_LIBRARY_PATH
 
 六个条目都要添加 不然会报错 error 500 uncatchexception
 
+重启app节点以生效
+
 
 ++++++ build app
 
@@ -400,7 +403,7 @@ MaxRequestChild 150
 
 ScriptAlias /ibmcognos/cgi-bin "/opt/ibm/cognos/apptie1/cgi-bin"
 
-<Directory>
+<Directory "/opt/ibm/cognos/apptie1/cgi-bin">
     AllowOverride None
 	Options None
 	Order allow,deny
@@ -409,7 +412,7 @@ ScriptAlias /ibmcognos/cgi-bin "/opt/ibm/cognos/apptie1/cgi-bin"
 
 Alias /ibmcognos "/opt/ibm/cognos/gw/webcontent"
 
-<Directory>
+<Directory "/opt/ibm/cognos/gw/webcontent">
     Options Indexes MultiViews
 	AllowOverride None
 	Order allow,deny
@@ -422,14 +425,13 @@ Alias /ibmcognos "/opt/ibm/cognos/gw/webcontent"
 注释CustomLog
 CustomLog "/usr/IBM/WebSphere8/WebSphere8/IHS/logs/access_log.%Y.%m.%d.log 85400 480" common env=!image
 
-ErrorLog "!/usr/IBM/WebSphere8/WebSphere8/IHS/bin/rotatelogs /usr/IBM/WebSphere8/WebSphere8/IHS/logs/error_log.%Y.%m.%d.log 864090 480"
+ErrorLog "|/usr/IBM/WebSphere8/WebSphere8/IHS/bin/rotatelogs /usr/IBM/WebSphere8/WebSphere8/IHS/logs/error_log.%Y.%m.%d.log 864090 480"
 
 注释LogFormat
 LogFormat “%h %l %u %t \"%r"\ %>s %b \"{Referer}i\" \"%{User-Agent}i\"” combined
 
 LogFormat "%h %{x-forwared-for}i %t %u %v:%p{%P} %m-%H Sec. %>s %b "
-LogFormat "%{Referer}i -> %U" referer
-LogFormat "%{User-agent}i" agent
+
 
 SetEnvIf Request_URI \.gif% image
 SetEnvIf Request_URI \.GIF% image
@@ -485,3 +487,54 @@ heapdump
 IBM_HEAPDUMP, true
 IBM_HEAPDUMPDIR, /tmp
 IBM_HEAPD_DUMP, true
+
++++++
+
+复制msjdbc_4.jar 驱动到 apptie1/2 的lib 目录下 
+++++
+
+系统的bash_profile 环境变量
+++
+export DB2DIR=/opt/ibm/db2/V9.7
+export LD_LIBRARY_PATH=$DB2DIR/lib32:
+
+
+
++++++ end
++++++
+排错快速引导
++++++
+
+
+
+++++
+参数
+++++
+
+profiles name
+dmgr
+app01
+
+app02
+
+webserver
+服务端口 8080
+管理端口 8008
+
+
+用户wasadmin
+组 wasgroup
+
+> WAS安装路径
+> IHS安装路径 
+
+>>cognos参数
+apptie1 IP，端口
+apptie2 IP, 端口
+cm IP 端口
+++++
+拓扑
+++++
+
+垂直两个apptie
+两个节点组成一个cognos集群
